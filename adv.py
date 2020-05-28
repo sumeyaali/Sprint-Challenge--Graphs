@@ -13,10 +13,10 @@ world = World()
 
 # You may uncomment the smaller graphs for development and testing purposes.
 # map_file = "maps/test_line.txt"
-map_file = "maps/test_cross.txt"
+# map_file = "maps/test_cross.txt"
 # map_file = "maps/test_loop.txt"
 # map_file = "maps/test_loop_fork.txt"
-# map_file = "maps/main_maze.txt"
+map_file = "maps/main_maze.txt"
 
 # Loads the map into a dictionary
 room_graph=literal_eval(open(map_file, "r").read())
@@ -65,68 +65,44 @@ When i'm in a room, im initializing the exits with '?'
 # traversal_path = ['n', 'n']
 traversal_path = []
 
+'''
+What am I keep track of?
+the path= keeps track of the direction you move in 
+where i have visited
 
-# building the visited graph
+also reverse of directions for when I hit a dead end
+'''
 
-def traverse_map(starting_room, direction=None):
+reverse = {
+    'n': 's',
+    's': 'n',
+    'w': 'e',
+    'e': 'w'
+}
 
-    starting_room = player.current_room.id
+def map_traversal(starting_room, visited=[]):
+    # keeps track of the direction you move in 
+    path = []
 
-    s = Stack()
-    s.push([starting_room])
+    for direction in player.current_room.get_exits():
+        # player moves in this direction
+        player.travel(direction)
 
-    # get room id 
-    #player.current_room.id
-
-    visited = {}
-    reverse = {
-        'n': 's',
-        's': 'n',
-        'e': 'w',
-        'w': 'e'
-    }
-
-    while len(visited) < len(world.rooms):
-        path = s.pop()
-        visited[path[-1]] = traversal_path
-        # iterate through exits 
-        for room_exit in player.current_room.get_exits():
-            current_room = world.rooms[starting_room]
-            # we are checking to see of an exit and room has been visited, of not we add them to the visited's list
-            if room_exit == '?' and player.current_room.id not in visited:
-                print('Lone',room_exit)
-                # if exit has not been in visited, travel to that exit and add visited {}
-                visited[current_room] = traversal_path
-
-                for next_room in player.current_room.get_room_in_direction(direction):
-                    if next_room not in visited:
-                        visited[next_room] = traversal_path          
-                        new_path = traverse_map(next_room, visited)
-                        if new_path:
-                            return new_path
+        # if the current room has already been visited, go back
+        if player.current_room.id in visited:
+            player.travel(reverse[direction])
+        else:
+            # else add this room to visited, and directions you took to your path list
+            visited.append(player.current_room.id)
+            path.append(direction)
+            path = path + map_traversal(player.current_room.id, visited)
+            player.travel(reverse[direction])
+            path.append(reverse[direction])
+    
+    return path
 
 
-
-    return traversal_path
-
-
-#   while s.size() > 0:
-#             #create the path 
-#             path = s.pop()
-#             #Once we dequeue, we check to see if the last number in the list has been visited
-#             if path[-1] not in visited:
-#             #DO THE THING
-#                 print(path[-1])
-#                 visited.add(path[-1])
-
-#                 for next_edge in self.get_neighbors(path[-1]):
-#                     new_path = list(path)
-#                     new_path.append(next_edge)
-#                     s.push(new_path)
-
-
-
-
+traversal_path = map_traversal(player.current_room.id)
 
 
 
